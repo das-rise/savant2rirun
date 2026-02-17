@@ -1,0 +1,12 @@
+[project]
+name = "savant2rirun"
+version = "0.1.0"
+description = "A tool to convert Savant trajectories for use with RIRUN."
+authors = [{ name = "Your Name", email = "your.email@example.com" }]
+dependencies = [
+    "rich-argparse",
+    "pyproj",
+]
+
+[project.scripts]
+savant2rirun = "savant2rirun.convert:main"
