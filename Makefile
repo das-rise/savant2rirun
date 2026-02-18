@@ -14,10 +14,6 @@ install:
 	@echo "Installing orbit-georef..."
 	uv pip install -e $(ORBIT_DIR)/orbit-georef
 
-run:
-	@echo "Running savant2rirun..."
-	uv run savant2rirun
-
 clean:
 	@echo "Cleaning up..."
 	rm -rf $(VENV_DIR)
