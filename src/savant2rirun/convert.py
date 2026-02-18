@@ -2,10 +2,9 @@ import argparse
 import json
 import os
 from math import pi
-from typing import Tuple, Union
+from typing import Tuple
 
 from rich_argparse import RichHelpFormatter
-from pyproj import CRS, Transformer
 
 
 class OpenLabelParser:
@@ -50,7 +49,9 @@ class OpenLabelParser:
         object_data = frame_data["objects"][str(object_id)]["object_data"]
         bb = object_data["rbbox"][0]["val"]
         pixel_x, pixel_y, _, _, angle = bb
-        angle = angle * 180 / pi  # Convert angle from radians to degrees
+        angle = (
+            angle * 180 / pi + 180
+        )  # Convert angle from radians to degrees and correct for coordinate system
         return pixel_x, pixel_y, angle
 
     def _iter_frames(self, start_frame: int = None, end_frame: int = None):
@@ -77,7 +78,9 @@ class OpenLabelParser:
                 self._get_vehicle_type(object_id),
             )
 
-    def parse(self, framerate: float, start_frame: int = None, end_frame: int = None) -> None:
+    def parse(
+        self, framerate: float, start_frame: int = None, end_frame: int = None
+    ) -> None:
         """
         Parses the OpenLabel file, optionally between the given frames,
         and populates the vehicles dictionary.
@@ -123,7 +126,9 @@ class OpenLabelParser:
                 for point in trajectory:
                     print(*point, sep=",", file=csvfile)
 
-    def convert_pixel_to_geo(self, georef_file: str, proj_string: str, offset: Tuple[float, float] = (0, 0)):
+    def convert_pixel_to_geo(
+        self, georef_file: str, proj_string: str, offset: Tuple[float, float] = (0, 0)
+    ):
         """
         Converts the pixel coordinates of the trajectories to geographic coordinates.
 
@@ -135,12 +140,18 @@ class OpenLabelParser:
         from orbit_georef import load_georef
 
         georef = load_georef(georef_file)
-        
+
         for vehicle in self.vehicles.values():
             x_y_trajectory = [point[:2] for point in vehicle["trajectory"]]
-            converted_trajectory = georef.pixels_to_geo_batch(x_y_trajectory, proj_string)
+            converted_trajectory = georef.pixels_to_geo_batch(
+                x_y_trajectory, proj_string
+            )
             for i, (x_conv, y_conv) in enumerate(converted_trajectory):
-                vehicle["trajectory"][i] = (x_conv-offset[0], y_conv-offset[1]) + vehicle["trajectory"][i][2:]
+                vehicle["trajectory"][i] = (
+                    x_conv - offset[0],
+                    y_conv - offset[1],
+                ) + vehicle["trajectory"][i][2:]
+
 
 def main():
 
@@ -194,6 +205,7 @@ def main():
         "--offset",
         type=float,
         nargs=2,
+        metavar=("X", "Y"),
         default=(0, 0),
         help="An optional (x, y) offset to apply to the coordinates after conversion. Defaults to (0, 0).",
     )
@@ -205,15 +217,14 @@ def main():
         help="The framerate of the video in frames per second. Defaults to 30.",
     )
 
-
     args = parser.parse_args()
-
 
     openlabel_parser = OpenLabelParser(args.filepath)
     openlabel_parser.parse(args.framerate, args.start_frame, args.end_frame)
     openlabel_parser.convert_pixel_to_geo(args.georef_file, args.proj, args.offset)
 
     openlabel_parser.write_trajectories(args.outpath)
+
 
 if __name__ == "__main__":
     main()
