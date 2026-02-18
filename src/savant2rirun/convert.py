@@ -33,7 +33,7 @@ class OpenLabelParser:
         """Gets the data for a given frame number."""
         return self.data["openlabel"]["frames"][str(frame)]
 
-    def _get_time(self, frame_id: int, framerate: int = 30) -> float:
+    def _get_time(self, frame_id: int, framerate: float) -> float:
         """Gets the timestamp for a given frame ID based on the framerate."""
         return frame_id / framerate
 
@@ -77,7 +77,7 @@ class OpenLabelParser:
                 self._get_vehicle_type(object_id),
             )
 
-    def parse(self, start_frame: int = None, end_frame: int = None) -> None:
+    def parse(self, framerate: float, start_frame: int = None, end_frame: int = None) -> None:
         """
         Parses the OpenLabel file, optionally between the given frames,
         and populates the vehicles dictionary.
@@ -89,7 +89,7 @@ class OpenLabelParser:
         for frame_id, frame_data in self._iter_frames(start_frame, end_frame):
             for id, bbox, vehicle_type in self._iter_vehicles_in_frame(frame_data):
                 x, y, angle = bbox
-                timestamp = self._get_time(int(frame_id))
+                timestamp = self._get_time(int(frame_id), framerate)
                 trajectory_point = (x, y, timestamp, angle)
                 if id not in self.vehicles:
                     self.vehicles[id] = {
@@ -187,7 +187,7 @@ def main():
         "--proj",
         type=str,
         default=None,
-        help="The projection string to use for converting pixel coordinates to geographic coordinates.",
+        help="The projection string to use for converting pixel coordinates to geographic coordinates. If omitted, defaults to a WGS84 projection.",
     )
 
     parser.add_argument(
@@ -198,12 +198,19 @@ def main():
         help="An optional (x, y) offset to apply to the coordinates after conversion. Defaults to (0, 0).",
     )
 
+    parser.add_argument(
+        "--framerate",
+        type=float,
+        default=30,
+        help="The framerate of the video in frames per second. Defaults to 30.",
+    )
+
 
     args = parser.parse_args()
 
 
     openlabel_parser = OpenLabelParser(args.filepath)
-    openlabel_parser.parse(args.start_frame, args.end_frame)
+    openlabel_parser.parse(args.framerate, args.start_frame, args.end_frame)
     openlabel_parser.convert_pixel_to_geo(args.georef_file, args.proj, args.offset)
 
     openlabel_parser.write_trajectories(args.outpath)
