@@ -13,8 +13,6 @@ install:
 	git clone $(ORBIT_REPO)
 	@echo "Installing orbit-georef..."
 	uv pip install -e $(ORBIT_DIR)/orbit-georef
-	@echo "Cleaning up ORBIT repository..."
-	rm -rf $(ORBIT_DIR)
 
 run:
 	@echo "Running savant2rirun..."
@@ -24,5 +22,6 @@ clean:
 	@echo "Cleaning up..."
 	rm -rf $(VENV_DIR)
 	rm -rf *.egg-info
+	rm -rf $(ORBIT_DIR)
 
 rebuild: clean install
