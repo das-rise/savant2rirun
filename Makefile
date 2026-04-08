@@ -21,3 +21,10 @@ clean:
 	rm -rf $(ORBIT_DIR)
 
 rebuild: clean install
+
+help:
+	@echo "Available targets:"
+	@echo "  install  - Set up the virtual environment and install dependencies"
+	@echo "  clean    - Remove the virtual environment and cloned ORBIT repository"
+	@echo "  rebuild  - Clean and then install everything again"
+	@echo "  help     - Show this help message"
