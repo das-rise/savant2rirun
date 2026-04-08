@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from math import pi
 from typing import Tuple
@@ -266,6 +267,7 @@ def main():
         tool_name = "savant2rirun"
         meta = metadata(tool_name)
         entity_id = "Savant2RIRUN_conversion_" + unique_hash[:8]
+
         if args.dataprov_input_provenance_files:
             input_provenance_files = args.dataprov_input_provenance_files
         else:
@@ -292,13 +294,14 @@ def main():
             ended_at=timestamp_now_dataprov(),
             tool_name=tool_name,
             tool_version=meta["Version"],
-            arguments=[f"{key}: {value}" for key, value in vars(args).items()],
+            arguments=" ".join(sys.argv[1:]),
             operation="Extract all individual trajectories from the OpenLabel file, one per vehicle, and convert their coordinates from pixel to geographic coordinates using the provided georeference file and projection string.",
             inputs=[args.openlabel_file, args.georef_file],
             input_formats=["OpenLabel/JSON", "orbit-georef/JSON"],
             outputs=list(openlabel_parser.get_written_trajectories()),
             output_formats=["CSV"] * len(openlabel_parser.get_written_trajectories()),
             input_provenance_files=input_provenance_files,
+            capture_environment=True
         )
 
         chain.save(f"{args.outpath}/{entity_id}_prov.json")
