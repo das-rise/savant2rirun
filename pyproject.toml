@@ -1,12 +1,13 @@
 [project]
 name = "savant2rirun"
-version = "0.1.0"
+version = "0.9.0"
 description = "A tool to convert Savant trajectories for use with RIRUN."
 authors = [{ name = "Bastian Havers-Zulka", email = "havers.bastian@ri.se" }]
 requires-python = ">=3.12"
 dependencies = [
     "rich-argparse",
     "pyproj",
+    "dataprov>=3.0.0",
 ]
 
 [project.scripts]
