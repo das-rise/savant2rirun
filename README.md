@@ -2,6 +2,9 @@
 
 A command-line tool to convert vehicle trajectories from [SAVANT's OpenLabel](https://github.com/RI-SE/SAVANT/tree/main/schema) format to a set of CSV files compatible with RIRUN. 
 
+> [!NOTE]
+> This open source project is maintained by [RISE Research Institutes of Sweden](https://ri.se/). See license file for open source license information.
+
 ## Installation
 
 Requires Python **≥ 3.12**. With [uv](https://docs.astral.sh/uv/) installed:
