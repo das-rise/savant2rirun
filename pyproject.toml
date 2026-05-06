@@ -1,14 +1,27 @@
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [project]
 name = "savant2rirun"
 version = "0.9.0"
 description = "A tool to convert Savant trajectories for use with RIRUN."
+readme = "README.md"
+license = { text = "GPL-3.0-or-later" }
 authors = [{ name = "Bastian Havers-Zulka", email = "havers.bastian@ri.se" }]
 requires-python = ">=3.12"
 dependencies = [
     "rich-argparse",
     "pyproj",
     "dataprov>=3.0.0",
+    "orbit-georef",
 ]
 
 [project.scripts]
 savant2rirun = "savant2rirun.convert:main"
+
+[tool.uv.sources]
+orbit-georef = { git = "https://github.com/RI-SE/ORBIT", subdirectory = "orbit-georef" }

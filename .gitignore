@@ -14,9 +14,6 @@ build/
 dist/
 *.egg-info/
 
-# Cloned repository
-ORBIT/
-
 # IDE files
 .vscode/
 .idea/
