@@ -61,3 +61,13 @@ The tool generates a CSV file for each vehicle trajectory. The files are named `
 *   [pyproj](https://pyproj4.github.io/pyproj/stable/)
 *   [orbit-georef](https://github.com/RI-SE/ORBIT/tree/main/orbit-georef) (part of the ORBIT project)
 *   [dataprov](https://pypi.org/project/dataprov/) (optional provenance tracking, used with `--use-dataprov`)
+
+## Acknowledgments
+
+The generation of OSI files in this project relies on the [`betterosi`](https://github.com/ika-rwth-aachen/betterosi) package.
+
+This software was developed as part of the [Synergies](https://synergies-ccam.eu/) project.
+
+![Synergies-logo](synergies.png)
+
+Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or European Climate, Infrastructure and Environment Executive Agency (CINEA). Neither the European Union nor the granting authority can be held responsible for them.
