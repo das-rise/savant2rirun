@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
-from math import pi
+from math import pi, sin, cos, sqrt, round
 from typing import Tuple
 
 from rich_argparse import RichHelpFormatter
@@ -45,23 +45,26 @@ class OpenLabelParser:
         """Gets the timestamp for a given frame ID based on the framerate."""
         return frame_id / framerate
 
-    def _parse_bounding_box(
+    def _get_bb_center_angle_width(
         self, frame_data: dict, object_id: int
-    ) -> Tuple[float, float, float]:
+    ) -> Tuple[float, float, float, float, float]:
         """
         Parses a bounding box from the OpenLabel data for a given frame and object ID.
 
         Returns:
             A tuple containing the x and y coordinates of the bounding box center in pixels,
-            and the angle of the bounding box in degrees.
+            the angle of the bounding box in degree, and the width of the bounding box in pixels
+            in the x and y directions.
         """
         object_data = frame_data["objects"][str(object_id)]["object_data"]
         bb = object_data["rbbox"][0]["val"]
-        pixel_x, pixel_y, _, _, angle = bb
+        pixel_x, pixel_y, pixel_width, pixel_height, angle = bb
+        pixel_width_x = pixel_width * cos(angle)
+        pixel_width_y = pixel_width * sin(angle)
         angle = (
             angle * 180 / pi + 180
         )  # Convert angle from radians to degrees and correct for coordinate system
-        return pixel_x, pixel_y, angle
+        return pixel_x, pixel_y, angle, pixel_width_x, pixel_width_y
 
     def _iter_frames(self, start_frame: int = None, end_frame: int = None):
         """Iterates over all frames in the OpenLabel data."""
@@ -83,7 +86,7 @@ class OpenLabelParser:
         for object_id in frame_data["objects"].keys():
             yield (
                 object_id,
-                self._parse_bounding_box(frame_data, object_id),
+                self._get_bb_center_angle_width(frame_data, object_id),
                 self._get_vehicle_type(object_id),
             )
 
@@ -99,13 +102,18 @@ class OpenLabelParser:
             end_frame (int, optional): The ending frame number to parse. Defaults to None.
         """
         for frame_id, frame_data in self._iter_frames(start_frame, end_frame):
-            for id, bbox, vehicle_type in self._iter_vehicles_in_frame(frame_data):
-                x, y, angle = bbox
+            for (
+                id,
+                bbox_center_angle_width,
+                vehicle_type,
+            ) in self._iter_vehicles_in_frame(frame_data):
+                x, y, angle, width_x, width_y = bbox_center_angle_width
                 timestamp = self._get_time(int(frame_id), framerate)
                 trajectory_point = (x, y, timestamp, angle)
                 if id not in self.vehicles:
                     self.vehicles[id] = {
                         "type": vehicle_type,
+                        "size": (width_x, width_y),
                         "trajectory": [trajectory_point],
                         "frames": [frame_id],
                     }
@@ -126,7 +134,8 @@ class OpenLabelParser:
         for vehicle_id, vehicle in self.vehicles.items():
             vehicle_type = vehicle["type"]
             trajectory = vehicle["trajectory"]
-            filename = f"vehicle_{vehicle_id}_{vehicle_type}.csv"
+            size = round(vehicle["size_meters"], 1)
+            filename = f"vehicle_{vehicle_id}_{vehicle_type}_{size}.csv"
             output_path = os.path.join(outpath, filename)
 
             with open(output_path, "w", newline="") as csvfile:
@@ -161,6 +170,11 @@ class OpenLabelParser:
                     x_conv - offset[0],
                     y_conv - offset[1],
                 ) + vehicle["trajectory"][i][2:]
+            px_scale_x, px_scale_y = georef.get_scale()[0], georef.get_scale()[1]
+            vehicle["size_meters"] = sqrt(
+                (vehicle["size"][0] * px_scale_x) ** 2
+                + (vehicle["size"][1] * px_scale_y) ** 2
+            )
 
     def get_written_trajectories(self):
         """Returns the set of trajectory filenames that have been written."""
@@ -168,7 +182,6 @@ class OpenLabelParser:
 
 
 def main():
-
     parser = argparse.ArgumentParser(
         prog="Savant2RIRUN",
         description="Convert trajectories contained in OpenLabel files from Savant for use with RIRUN.",
@@ -301,7 +314,7 @@ def main():
             outputs=list(openlabel_parser.get_written_trajectories()),
             output_formats=["CSV"] * len(openlabel_parser.get_written_trajectories()),
             input_provenance_files=input_provenance_files,
-            capture_environment=True
+            capture_environment=True,
         )
 
         chain.save(f"{args.outpath}/{entity_id}_prov.json")
